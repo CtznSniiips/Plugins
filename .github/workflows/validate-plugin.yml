@@ -261,7 +261,7 @@ jobs:
     if: >-
       needs.detect-changes.result == 'success' &&
       needs.detect-changes.outputs.outside_files != '' &&
-      needs.detect-changes.outputs.outside_violation != 'true' &&
+      needs.detect-changes.outputs.outside_violation == 'false' &&
       needs.detect-changes.outputs.close_pr == 'false'
     uses: ./.github/workflows/tests.yml
     with:
@@ -568,6 +568,10 @@ jobs:
           HAS_NEW_PLUGIN: ${{ needs.detect-changes.outputs.has_new_plugin }}
         run: |
           labels=$(gh pr view "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --json labels --jq '[.labels[].name] | join("\n")')
+          if printf '%s\n' "$labels" | grep -qx 'Repo Update'; then
+            echo "Repository update PRs do not use the manual-review workflow."
+            exit 0
+          fi
           if printf '%s\n' "$labels" | grep -qx 'Manual Review Required'; then
             exit 0
           fi
